@@ -18,11 +18,6 @@ export default (server, log) => {
           socket.emit('data', chunk)
         })
 
-        tcp.on('error', err => {
-          log && log.verbose('io', 'Error for %s:%s [%s]: %s', host, port, id, err.message)
-          socket.emit('error', err.message)
-        })
-
         tcp.on('end', () => socket.emit('end'))
 
         tcp.on('close', () => {
@@ -63,6 +58,16 @@ export default (server, log) => {
           socket.removeAllListeners()
         })
       })
+      // move down here so that error handler is attached early enough to catch net.connect errors during connection phase, e.g. host not found
+      tcp.on('error', err => {
+        log && log.verbose('io', 'Error for %s:%s [%s]: %s', host, port, id, err.message)
+        socket.emit('socketerror', err.message) // send to client, 'error' is a reserved name that doesn't get sent to client
+        socket.emit('error', err.message)
+      })
     })
+
+    socket.on('error', err => {
+      log && log.verbose('io', 'Error for %s', err)
+    });
   })
 }

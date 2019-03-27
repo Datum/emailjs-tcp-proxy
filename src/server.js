@@ -18,10 +18,18 @@ const exit = (signal, exitCode) => () => {
 process.on('SIGINT', exit('SIGINT', 1))
 process.on('SIGUSR1', exit('SIGUSR1', 1))
 process.on('SIGUSR2', exit('SIGUSR2', 1))
-process.on('uncaughtException', exit('Uncaught exception', 1))
+// process.on('uncaughtException', exit('Uncaught exception', 1))
 process.on('SIGTERM', exit('SIGTERM', 0))
 process.on('SIGINT', exit('SIGINT', 0))
-process.on('uncaughtException', exit('uncaughtException', 1))
+// process.on('uncaughtException', exit('uncaughtException', 1))
+process
+  .on('unhandledRejection', (reason, p) => {
+    console.error(reason, 'Unhandled Rejection at Promise', p);
+  })
+  .on('uncaughtException', err => {
+    console.error(err, 'Uncaught Exception thrown');
+    process.exit(1);
+  });
 process.on('exit', () => {
   if (cluster.isMaster) {
     for (var id in cluster.workers) {
